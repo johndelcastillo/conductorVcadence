@@ -1,0 +1,9 @@
+{
+    "name": "check_order_in_stock",
+    "retryCount": 3,
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 10,
+    "timeoutSeconds": 300,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "responseTimeoutSeconds": 180
+}

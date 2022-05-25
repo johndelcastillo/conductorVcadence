@@ -1,0 +1,59 @@
+{
+    "name": "process_order",
+    "description": "Processes an order and sends to customer",
+    "version": 1,
+    "schemaVersion": 2,
+    "tasks": [
+        {
+            "name": "check_order_in_stock",
+            "taskReferenceName": "check_stock",
+            "inputParameters": {
+                "orderId": "${workflow.input.orderId}"
+            },
+            "type": "SIMPLE"
+        },
+        {
+            "name": "switch_task",
+            "taskReferenceName": "is_order_in_stock",
+            "inputParameters": {
+                "case_value_param": "${ident_verification.output.is_order_in_stock}"
+            },
+            "type": "SWITCH",
+            "evaluatorType": "value-param",
+            "expression": "case_value_param",
+            "decisionCases": {
+                "false": [
+                    {
+                        "name": "notify_customer",
+                        "taskReferenceName": "notify_customer_of_delay",
+                        "inputParameters": {
+                            "email": "${workflow.input.email}",
+                            "message": "${workflow.input.message}"
+                        },
+                        "type": "SIMPLE"
+                    }
+                ]
+            },
+            "defaultCase": [
+                {
+                    "name": "package_and_send_order",
+                    "taskReferenceName": "package_and_send_order_to_address",
+                    "inputParameters": {
+                        "orderId": "${workflow.input.orderId}",
+                        "address": "${workflow.input.email}"
+                    },
+                    "type": "SIMPLE"
+                },
+                {
+                    "name": "notify_customer",
+                    "taskReferenceName": "notify_customer_of_order",
+                    "inputParameters": {
+                        "email": "${workflow.input.email}",
+                        "message": "${workflow.input.message}"
+                    },
+                    "type": "SIMPLE"
+                }
+            ]
+        }
+    ]
+}
