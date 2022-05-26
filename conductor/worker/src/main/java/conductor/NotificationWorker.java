@@ -34,7 +34,7 @@ public class NotificationWorker implements Worker {
         String emailAddress = (String) task.getInputData().get("email");
         String message = (String) task.getInputData().get("message");
 
-        logger.info("Sending delay notification to: {}");
+        logger.info("Sending \"{}\" to: {}", message, emailAddress);
 
         notificationService.Notify(emailAddress, message);
 

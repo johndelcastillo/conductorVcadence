@@ -31,7 +31,7 @@ public class App {
         int threadCount = 3; // number of threads used to execute workers. To avoid starvation, should be
                              // same or more than number of workers
 
-        Worker worker1 = new StockWorker("check_order_in_stock", new StockService());
+        Worker worker1 = new StockWorker("check_stock", new StockService());
         Worker worker2 = new PackagingWorker("package_and_send_order", new StockService());
         Worker worker3 = new NotificationWorker("notify_customer", new NotificationService());
 

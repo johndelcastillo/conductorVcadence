@@ -1,0 +1,81 @@
+{
+    "name": "process_order",
+    "description": "Processes an order and sends to customer",
+    "version": 1,
+    "schemaVersion": 2,
+    "ownerEmail": "fake@thing.com",
+    "tasks": [
+        {
+            "name": "Wait for stock",
+            "taskReferenceName": "LoopTask",
+            "type": "DO_WHILE",
+            "loopCondition": "if (new Date($.check_stock.output.restockEta) < Date.now()) { false; } else { true; }",
+            "loopOver": [
+                {
+                    "name": "check_stock",
+                    "taskReferenceName": "check_stock",
+                    "inputParameters": {
+                        "orderId": "${workflow.input.orderId}"
+                    },
+                    "type": "SIMPLE"
+                },
+                {
+                    "name": "compose_delay_message",
+                    "taskReferenceName": "delay_message",
+                    "type": "INLINE",
+                    "inputParameters": {
+                        "value": "${check_stock.output.restockEta}",
+                        "evaluatorType": "javascript",
+                        "expression": "function e() { return {message: \"Stock is backordered, estimated eta: $.value\"} }"
+                    }
+                },
+                {
+                    "name": "notify_customer",
+                    "taskReferenceName": "notify_customer_of_delay",
+                    "inputParameters": {
+                        "email": "${workflow.input.email}",
+                        "message": "${delay_message.output.message}"
+                    },
+                    "type": "SIMPLE"
+                },
+                {
+                    "name": "wait_for_restock",
+                    "taskReferenceName": "wait_for_restock",
+                    "type": "WAIT",
+                    "timeoutPolicy": "ALERT_ONLY",
+                    "timeoutSeconds": 20
+                }
+            ],
+            "startDelay": 0,
+            "optional": false
+        },
+        {
+            "name": "package_and_send_order",
+            "taskReferenceName": "package_and_send_order_to_address",
+            "inputParameters": {
+                "orderId": "${workflow.input.orderId}",
+                "address": "${workflow.input.address}"
+            },
+            "type": "SIMPLE"
+        },
+        {
+            "name": "compose_sent_message",
+            "taskReferenceName": "sent_message",
+            "type": "INLINE",
+            "inputParameters": {
+                "value": "${package_and_send_order_to_address.output.trackingRef",
+                "evaluatorType": "javascript",
+                "expression": "function e() { return {message: \"Your order is on the way, tracking ref: $.value.\"} }"
+            }
+        },
+        {
+            "name": "notify_customer",
+            "taskReferenceName": "notify_customer_of_order",
+            "inputParameters": {
+                "email": "${workflow.input.email}",
+                "message": "${sent_message.output.message}"
+            },
+            "type": "SIMPLE"
+        }
+    ]
+}

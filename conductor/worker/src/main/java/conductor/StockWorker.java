@@ -1,5 +1,8 @@
 package conductor;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import com.netflix.conductor.client.worker.Worker;
 import com.netflix.conductor.common.metadata.tasks.Task;
 import com.netflix.conductor.common.metadata.tasks.TaskResult;
@@ -33,14 +36,19 @@ public class StockWorker implements Worker {
         String orderId = (String) task.getInputData().get("orderId");
 
         logger.info("Checking stock level for: {}", orderId);
-        long stockEta = this.stockService.getRestockEta(orderId);
+        long restockEta = this.stockService.getRestockEta(orderId);
+        long restockEtaDays = Duration.ofSeconds(restockEta - Instant.now().getEpochSecond()).toDays();
+        boolean inStock = Instant.ofEpochSecond(restockEta).isBefore(Instant.now());
+
+        logger.info("In Stock: {}", inStock);
 
         // Return the result
         TaskResult result = new TaskResult(task);
         result.setStatus(Status.COMPLETED);
 
         // Register the output of the task
-        result.getOutputData().put("restockEta", stockEta);
+        result.getOutputData().put("inStock", inStock);
+        result.getOutputData().put("restockEtaDays", restockEtaDays);
 
         return result;
     }

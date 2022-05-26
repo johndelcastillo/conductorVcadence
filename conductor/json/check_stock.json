@@ -1,9 +1,10 @@
 {
-    "name": "check_order_in_stock",
+    "name": "check_stock",
     "retryCount": 3,
     "retryLogic": "FIXED",
     "retryDelaySeconds": 10,
     "timeoutSeconds": 300,
     "timeoutPolicy": "TIME_OUT_WF",
-    "responseTimeoutSeconds": 180
+    "responseTimeoutSeconds": 180,
+    "ownerEmail": "fake@thing.com"
 }

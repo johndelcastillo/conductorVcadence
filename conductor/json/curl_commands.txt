@@ -1,4 +1,43 @@
-{
+curl -X POST \
+  http://localhost:8080/api/metadata/taskdefs \
+  -H 'Content-Type: application/json' \
+  -d '[
+    {
+    "name": "check_stock",
+    "retryCount": 3,
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 10,
+    "timeoutSeconds": 300,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "responseTimeoutSeconds": 180,
+    "ownerEmail": "fake@thing.com"
+    }, 
+    {
+    "name": "notify_customer",
+    "retryCount": 3,
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 10,
+    "timeoutSeconds": 300,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "responseTimeoutSeconds": 180,
+    "ownerEmail": "fake@thing.com"
+    }, 
+    {
+    "name": "package_and_send_order",
+    "retryCount": 3,
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 10,
+    "timeoutSeconds": 300,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "responseTimeoutSeconds": 180,
+    "ownerEmail": "fake@thing.com"
+    }
+]'
+
+curl -X POST \
+  http://localhost:8080/api/metadata/workflow \
+  -H 'Content-Type: application/json' \
+  -d '{
     "name": "process_order",
     "description": "Processes an order and sends to customer",
     "version": 1,
@@ -37,7 +76,7 @@
                                 "inputParameters": {
                                     "value": "${check_stock.output.restockEtaDays}",
                                     "evaluatorType": "javascript",
-                                    "expression": "function e() { return {\"message\": \"Stock is backordered, estimated eta days: \" + $.value}} e();"
+                                    "expression": "function e() { return {message: \"Stock is backordered, estimated eta: $.value days\"} }"
                                 }
                             },
                             {
@@ -50,14 +89,11 @@
                                 "type": "SIMPLE"
                             },
                             {
-                                "name": "delay_workflow",
-                                "taskReferenceName": "delay_workflow",
-                                "type": "INLINE",
-                                "inputParameters": {
-                                    "evaluatorType": "javascript",
-                                    "expression": "function e(){} e();"
-                                },
-                                "startDelay": 10
+                                "name": "wait_for_restock",
+                                "taskReferenceName": "wait_for_restock",
+                                "type": "WAIT",
+                                "timeoutPolicy": "ALERT_ONLY",
+                                "timeoutSeconds": 20
                             }
                         ]
                     },
@@ -103,4 +139,18 @@
             }
         }
     ]
-}
+}'
+
+curl -X POST \
+  http://localhost:8080/api/workflow/ \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "process_order",
+    "version": 1,
+    "correlationId": "process_order_aaasd",
+    "input": {
+        "orderId": "abcdefx",
+        "email" : "fakeemail",
+        "address" : "fakeaddress"
+    }
+}'
