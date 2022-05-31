@@ -28,16 +28,17 @@ public class App {
         TaskClient taskClient = new TaskClient();
         taskClient.setRootURI("http://localhost:8080/api/"); // Point this to the server API
 
-        int threadCount = 3; // number of threads used to execute workers. To avoid starvation, should be
+        int threadCount = 4; // number of threads used to execute workers. To avoid starvation, should be
                              // same or more than number of workers
 
         Worker worker1 = new StockWorker("check_stock", new StockService());
         Worker worker2 = new PackagingWorker("package_and_send_order", new StockService());
-        Worker worker3 = new NotificationWorker("notify_customer", new NotificationService());
+        Worker worker3 = new NotificationWorker("notify_customer_of_delay", new NotificationService());
+        Worker worker4 = new NotificationWorker("notify_customer_order_sent", new NotificationService());
 
         // Create TaskRunnerConfigurer
         TaskRunnerConfigurer configurer = new TaskRunnerConfigurer.Builder(taskClient,
-                Arrays.asList(worker1, worker2, worker3))
+                Arrays.asList(worker1, worker2, worker3, worker4))
                 .withThreadCount(threadCount)
                 .build();
 

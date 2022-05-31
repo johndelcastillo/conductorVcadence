@@ -1,10 +1,42 @@
-{
-    "name": "check_stock",
-    "retryCount": 3,
-    "retryLogic": "FIXED",
-    "retryDelaySeconds": 10,
-    "timeoutSeconds": 300,
-    "timeoutPolicy": "TIME_OUT_WF",
-    "responseTimeoutSeconds": 180,
-    "ownerEmail": "fake@thing.com"
-}
+[
+    {
+        "name": "check_stock",
+        "retryCount": 3,
+        "retryLogic": "FIXED",
+        "retryDelaySeconds": 10,
+        "timeoutSeconds": 300,
+        "timeoutPolicy": "TIME_OUT_WF",
+        "responseTimeoutSeconds": 180,
+        "ownerEmail": "john@instaclustr.com"
+    },
+    {
+        "name": "notify_customer_of_delay",
+        "retryCount": 3,
+        "retryLogic": "FIXED",
+        "retryDelaySeconds": 10,
+        "timeoutSeconds": 300,
+        "timeoutPolicy": "TIME_OUT_WF",
+        "responseTimeoutSeconds": 180,
+        "ownerEmail": "john@instaclustr.com"
+    },
+    {
+        "name": "package_and_send_order",
+        "retryCount": 3,
+        "retryLogic": "FIXED",
+        "retryDelaySeconds": 10,
+        "timeoutSeconds": 300,
+        "timeoutPolicy": "TIME_OUT_WF",
+        "responseTimeoutSeconds": 180,
+        "ownerEmail": "john@instaclustr.com"
+    },
+    {
+        "name": "notify_customer_order_sent",
+        "retryCount": 3,
+        "retryLogic": "FIXED",
+        "retryDelaySeconds": 10,
+        "timeoutSeconds": 300,
+        "timeoutPolicy": "TIME_OUT_WF",
+        "responseTimeoutSeconds": 180,
+        "ownerEmail": "john@instaclustr.com"
+    }
+]

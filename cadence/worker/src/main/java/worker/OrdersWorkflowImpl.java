@@ -19,7 +19,7 @@ public class OrdersWorkflowImpl implements OrdersWorkflow {
 
     @Override
     public void processOrder(Order order) {
-        logger.info("New order received!");
+
         final OrdersActivities activities = Workflow.newActivityStub(OrdersActivities.class,
                 new ActivityOptions.Builder()
                         .setRetryOptions(new RetryOptions.Builder()
@@ -35,15 +35,9 @@ public class OrdersWorkflowImpl implements OrdersWorkflow {
             // Notify customer of delay
             activities.notifyDelay(order.getAccountEmail(), stockInfo.getRestockEta());
 
-            // Wait until restock eta
-            Duration waitDuration = Duration.ofSeconds(
-                    stockInfo.getRestockEta() - Instant.now().getEpochSecond());
-            logger.info("Waiting {} days for restock, then restarting workflow.",
-                    waitDuration.toDays());
-
-            Workflow.sleep(waitDuration);
-
-            // Start the workflow again
+            // Wait for restock
+            Workflow.sleep(stockInfo.getWaitTime());
+            // Start a new workflow
             Workflow.continueAsNew(order);
         }
 
@@ -52,6 +46,5 @@ public class OrdersWorkflowImpl implements OrdersWorkflow {
 
         // Notify customer
         activities.notifySent(order.getAccountEmail(), trackingId);
-
     }
 }

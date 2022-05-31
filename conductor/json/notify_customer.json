@@ -6,5 +6,5 @@
     "timeoutSeconds": 300,
     "timeoutPolicy": "TIME_OUT_WF",
     "responseTimeoutSeconds": 180,
-    "ownerEmail": "fake@thing.com"
+    "ownerEmail": "john@instaclustr.com"
 }

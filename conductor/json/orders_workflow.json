@@ -9,7 +9,7 @@
             "name": "Wait for stock",
             "taskReferenceName": "LoopTask",
             "type": "DO_WHILE",
-            "loopCondition": "if ($.LoopTask['iteration'] < 5 ) { true; } else { false; }",
+            "loopCondition": "!$.check_stock.output.instock",
             "loopOver": [
                 {
                     "name": "check_stock",
@@ -31,33 +31,18 @@
                     "decisionCases": {
                         "false": [
                             {
-                                "name": "compose_delay_message",
-                                "taskReferenceName": "delay_message",
-                                "type": "INLINE",
-                                "inputParameters": {
-                                    "value": "${check_stock.output.restockEtaDays}",
-                                    "evaluatorType": "javascript",
-                                    "expression": "function e() { return {\"message\": \"Stock is backordered, estimated eta days: \" + $.value}} e();"
-                                }
-                            },
-                            {
-                                "name": "notify_customer",
+                                "name": "notify_customer_of_delay",
                                 "taskReferenceName": "notify_customer_of_delay",
                                 "inputParameters": {
                                     "email": "${workflow.input.email}",
-                                    "message": "${delay_message.output.message}"
+                                    "restockEta": "${check_stock.output.restockEta}"
                                 },
                                 "type": "SIMPLE"
                             },
                             {
                                 "name": "delay_workflow",
                                 "taskReferenceName": "delay_workflow",
-                                "type": "INLINE",
-                                "inputParameters": {
-                                    "evaluatorType": "javascript",
-                                    "expression": "function e(){} e();"
-                                },
-                                "startDelay": 10
+                                "type": "WAIT"
                             }
                         ]
                     },
@@ -72,11 +57,11 @@
                             "type": "SIMPLE"
                         },
                         {
-                            "name": "notify_customer",
-                            "taskReferenceName": "notify_customer_of_order",
+                            "name": "notify_customer_order_sent",
+                            "taskReferenceName": "notify_customer_order_sent",
                             "inputParameters": {
                                 "email": "${workflow.input.email}",
-                                "message": "${workflow.input.message}"
+                                "trackingRef": "${package_and_send_order_to_address.output.trackingRef}"
                             },
                             "type": "SIMPLE"
                         },
@@ -93,14 +78,6 @@
                     "optional": false
                 }
             ]
-        },
-        {
-            "name": "terminate_fail",
-            "taskReferenceName": "terminate_fail",
-            "type": "TERMINATE",
-            "inputParameters": {
-                "terminationStatus": "FAILED"
-            }
         }
     ]
 }

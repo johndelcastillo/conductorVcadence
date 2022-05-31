@@ -1,53 +1,4 @@
-curl -X POST \
-  http://localhost:8080/api/metadata/taskdefs \
-  -H 'Content-Type: application/json' \
-  -d '[
-    {
-        "name": "check_stock",
-        "retryCount": 3,
-        "retryLogic": "FIXED",
-        "retryDelaySeconds": 10,
-        "timeoutSeconds": 300,
-        "timeoutPolicy": "TIME_OUT_WF",
-        "responseTimeoutSeconds": 180,
-        "ownerEmail": "john@instaclustr.com"
-    },
-    {
-        "name": "notify_customer_of_delay",
-        "retryCount": 3,
-        "retryLogic": "FIXED",
-        "retryDelaySeconds": 10,
-        "timeoutSeconds": 300,
-        "timeoutPolicy": "TIME_OUT_WF",
-        "responseTimeoutSeconds": 180,
-        "ownerEmail": "john@instaclustr.com"
-    },
-    {
-        "name": "package_and_send_order",
-        "retryCount": 3,
-        "retryLogic": "FIXED",
-        "retryDelaySeconds": 10,
-        "timeoutSeconds": 300,
-        "timeoutPolicy": "TIME_OUT_WF",
-        "responseTimeoutSeconds": 180,
-        "ownerEmail": "john@instaclustr.com"
-    },
-    {
-        "name": "notify_customer_order_sent",
-        "retryCount": 3,
-        "retryLogic": "FIXED",
-        "retryDelaySeconds": 10,
-        "timeoutSeconds": 300,
-        "timeoutPolicy": "TIME_OUT_WF",
-        "responseTimeoutSeconds": 180,
-        "ownerEmail": "john@instaclustr.com"
-    }
-]'
-
-curl -X POST \
-  http://localhost:8080/api/metadata/workflow \
-  -H 'Content-Type: application/json' \
-  -d '{
+{
     "name": "process_order",
     "description": "Processes an order and sends to customer",
     "version": 1,
@@ -58,7 +9,7 @@ curl -X POST \
             "name": "Wait for stock",
             "taskReferenceName": "LoopTask",
             "type": "DO_WHILE",
-            "loopCondition": "!$.check_stock.output.inStock",
+            "loopCondition": "if ($.LoopTask['iteration'] < 5 ) { true; } else { false; }", // fix this, make it use the check stock
             "loopOver": [
                 {
                     "name": "check_stock",
@@ -80,18 +31,33 @@ curl -X POST \
                     "decisionCases": {
                         "false": [
                             {
-                                "name": "notify_customer_of_delay",
+                                "name": "compose_delay_message",
+                                "taskReferenceName": "delay_message",
+                                "type": "INLINE",
+                                "inputParameters": {
+                                    "value": "${check_stock.output.restockEtaDays}",
+                                    "evaluatorType": "javascript",
+                                    "expression": "function e() { return {\"message\": \"Stock is backordered, estimated eta days: \" + $.value}} e();"
+                                }
+                            },
+                            {
+                                "name": "notify_customer",
                                 "taskReferenceName": "notify_customer_of_delay",
                                 "inputParameters": {
                                     "email": "${workflow.input.email}",
-                                    "restockEta": "${check_stock.output.restockEta}"
+                                    "message": "${delay_message.output.message}"
                                 },
                                 "type": "SIMPLE"
                             },
                             {
                                 "name": "delay_workflow",
                                 "taskReferenceName": "delay_workflow",
-                                "type": "WAIT"
+                                "type": "WAIT",
+                                "inputParameters": {
+                                    "evaluatorType": "javascript",
+                                    "expression": "function e(){} e();"
+                                },
+                                "startDelay": 10
                             }
                         ]
                     },
@@ -106,11 +72,11 @@ curl -X POST \
                             "type": "SIMPLE"
                         },
                         {
-                            "name": "notify_customer_order_sent",
-                            "taskReferenceName": "notify_customer_order_sent",
+                            "name": "notify_customer",
+                            "taskReferenceName": "notify_customer_of_order",
                             "inputParameters": {
                                 "email": "${workflow.input.email}",
-                                "trackingRef": "${package_and_send_order_to_address.output.trackingRef}"
+                                "message": "${workflow.input.message}"
                             },
                             "type": "SIMPLE"
                         },
@@ -127,20 +93,14 @@ curl -X POST \
                     "optional": false
                 }
             ]
+        },
+        {
+            "name": "terminate_fail",
+            "taskReferenceName": "terminate_fail",
+            "type": "TERMINATE",
+            "inputParameters": {
+                "terminationStatus": "FAILED"
+            }
         }
     ]
-}'
-
-curl -X POST \
-  http://localhost:8080/api/workflow/ \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "name": "process_order",
-    "version": 1,
-    "correlationId": "process_order_cf_128493x",
-    "input": {
-        "orderId": "cf_128493x",
-        "email" : "john@instaclustr.com",
-        "address" : "1 Smith St"
-    }
-}'
+}
